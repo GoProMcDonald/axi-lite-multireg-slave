@@ -32,24 +32,34 @@ module tb_axi_lite_slave_regs;
     end
 
     // 写任务
-    task automatic axi_write(input logic [31:0] addr, input logic [31:0] data);//定义一个自动任务axi_write，用于执行写操作
+    task automatic axi_write(input logic [31:0] addr, input logic [31:0] data);
     begin
         @(posedge clk);
         awaddr  <= addr;
         awvalid <= 1;
         wdata   <= data;
         wvalid  <= 1;
-        wstrb   <= 4'b1111;// 假设全写使能
-        // 等待AWREADY和WREADY
-        wait (awready && awvalid); @(posedge clk);//等待slave拉高awready，完成写地址通道握手
-        awvalid <= 0;// 写地址握手完成后，将awvalid复位
-        wait (wready && wvalid); @(posedge clk);//等待slave拉高wready，完成写数据通道握手
-        wvalid <= 0;// 写数据握手完成后，将wvalid复位
-        // 等待BVALID
-        bready <= 1;// 准备接受写响应
-        wait (bvalid);//等待slave拉高bvalid，表示写响应有效
+        wstrb   <= 4'b1111;
+
+        // 并行等待两个通道握手后再拉低 valid
+        fork
+            begin
+                wait (awready && awvalid);
+                @(posedge clk);
+                awvalid <= 0;
+            end
+            begin
+                wait (wready && wvalid);
+                @(posedge clk);
+                wvalid <= 0;
+            end
+        join
+
+        // 写响应握手
+        bready <= 1;
+        wait (bvalid);
         @(posedge clk);
-        bready <= 0;// 写响应握手完成后，将bready复位
+        bready <= 0;
     end
     endtask
 
@@ -59,7 +69,8 @@ module tb_axi_lite_slave_regs;
         @(posedge clk);
         araddr  <= addr;
         arvalid <= 1;
-        wait (arready && arvalid); @(posedge clk);
+        wait (arready && arvalid); 
+        @(posedge clk);
         arvalid <= 0;
         rready  <= 1;
         wait (rvalid);
@@ -74,6 +85,8 @@ module tb_axi_lite_slave_regs;
     integer i;
 
     initial begin
+        $dumpfile("dump.vcd");  // 指定VCD波形文件名
+        $dumpvars(0, tb_axi_lite_slave_regs); // tb模块名改成你的testbench模块名
         wait(rst_n == 1);// 等待复位信号稳定
         // 写入4个寄存器
         for (i=0; i<4; i=i+1) begin
