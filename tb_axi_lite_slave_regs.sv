@@ -64,6 +64,35 @@ module tb_axi_lite_slave_regs;
     endtask
 
     // 读任务
+task automatic axi_read(
+    input  logic        clk,
+    input  logic        rst_n,
+    input  logic [31:0] addr,
+    output logic [31:0] data
+);
+    // Step 1: 发出读请求
+    araddr  <= addr;
+    arvalid <= 1;
+
+    // Step 2: 等待从机响应 ARREADY
+    wait (arready && arvalid);
+    @(posedge clk);
+    arvalid <= 0;
+
+    // Step 3: 等待从机返回数据
+    wait (rvalid);
+    @(posedge clk); // 等一个时钟确保 RDATA 被采样
+    data <= rdata;
+
+    // Step 4: 主动响应 RREADY
+    rready <= 1;
+    @(posedge clk);
+    rready <= 0;
+
+    // 可选：打印结果
+    $display("AXI READ: addr = 0x%08x, data = 0x%08x", addr, data);
+endtask
+
     logic [31:0] rdata0, rdata1;
 
 initial begin
