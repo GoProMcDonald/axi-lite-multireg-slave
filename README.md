@@ -29,4 +29,5 @@
        $dumpvars(0, tb_axi_lite_slave_regs); // 替换为你的testbench模块名
        ...
    end
-<img width="1831" height="795" alt="image" src="https://github.com/user-attachments/assets/8341d502-5c7b-4068-be23-141517685024" />
+<img width="1830" height="793" alt="image" src="https://github.com/user-attachments/assets/f7f9d581-655e-47d7-9316-0cabdb5e841d" />
+
