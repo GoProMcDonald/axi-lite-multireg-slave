@@ -64,21 +64,25 @@ module tb_axi_lite_slave_regs;
     endtask
 
     // 读任务
-    task automatic axi_read(input logic [31:0] addr, output logic [31:0] data);//定义一个自动任务axi_read，用于执行读操作
-    begin
-        @(posedge clk);
-        araddr  <= addr;
-        arvalid <= 1;
-        wait (arready && arvalid); 
-        @(posedge clk);
-        arvalid <= 0;
-        rready  <= 1;
-        wait (rvalid);
-        data = rdata;
-        @(posedge clk);
-        rready <= 0;
-    end
-    endtask
+    logic [31:0] rdata0, rdata1;
+
+initial begin
+    // 初始化
+    clk    = 0;
+    rst_n  = 0;
+    #20;
+    rst_n  = 1;
+
+    // 写入数据
+    axi_write(clk, rst_n, 32'h00000000, 32'hA5A50000);
+    axi_write(clk, rst_n, 32'h00000004, 32'hDEAD1234);
+
+    // 读取回来
+    axi_read(clk, rst_n, 32'h00000000, rdata0);
+    axi_read(clk, rst_n, 32'h00000004, rdata1);
+
+    $display("Read Back: rdata0 = 0x%08x, rdata1 = 0x%08x", rdata0, rdata1);
+
 
     // 主仿真流程
     logic [31:0] rd_data;
